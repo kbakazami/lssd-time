@@ -1,43 +1,39 @@
 import { useState, useEffect } from "react";
 import type { Agent } from "../../domain/models/Agent";
 import type { Heure } from "../../domain/models/Heure";
-import { getLundi } from "../../shared/dateUtils";
 import { saveHeure } from "../../infrastructure/supabaseHeureRepository";
 import Toast from "./Toast";
-
 
 type Props = {
     agents: Agent[];
     heures: Heure[];
     onReload: () => void;
+    startDate: Date; // 🆕 reçu en props
 };
 
-const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
-export default function AdminEditableWeekTable({ agents, heures, onReload }: Props) {
-    const lundi = getLundi();
+export default function AdminEditableWeekTable({ agents, heures, onReload, startDate }: Props) {
     const [editing, setEditing] = useState(false);
-    const [local, setLocal] = useState<Record<string, number[]>>({}); // clé : agentId → [lundi..dimanche]
+    const [local, setLocal] = useState<Record<string, number[]>>({}); // clé : agentId → [heures sur 7 jours]
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-
-    // Init local state
+    // Init local state à chaque changement de semaine ou données
     useEffect(() => {
         const newState: Record<string, number[]> = {};
 
         agents.forEach((agent) => {
             newState[agent.id] = jours.map((_, i) => {
-                const date = new Date(lundi);
+                const date = new Date(startDate);
                 date.setDate(date.getDate() + i);
                 const dateStr = date.toISOString().split("T")[0];
-                return heures.find(
-                    (h) => h.agent_id === agent.id && h.date === dateStr
-                )?.heures || 0;
+
+                return heures.find(h => h.agent_id === agent.id && h.date === dateStr)?.heures || 0;
             });
         });
 
         setLocal(newState);
-    }, [heures, agents]);
+    }, [heures, agents, startDate]);
 
     const handleSave = async () => {
         console.log("💾 Admin - sauvegarde en cours...");
@@ -46,7 +42,7 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
             const heuresAgent = local[agent.id] || [];
 
             for (let i = 0; i < 7; i++) {
-                const date = new Date(lundi);
+                const date = new Date(startDate);
                 date.setDate(date.getDate() + i);
                 const dateStr = date.toISOString().split("T")[0];
 
@@ -57,20 +53,17 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
                 const newValue = heuresAgent[i];
 
                 if (oldValue === null && newValue === 0) continue;
+
                 if (oldValue === null && newValue > 0) {
-                    console.log(`🟢 INSERT [${agent.pseudo}] ${dateStr} : ${newValue}h`);
                     await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
                     continue;
                 }
+
                 if (oldValue !== null && oldValue !== newValue) {
-                    console.log(`✏️ UPDATE [${agent.pseudo}] ${dateStr} : ${oldValue}h → ${newValue}h`);
                     await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
                 }
             }
         }
-
-        await onReload();
-        setEditing(false);
 
         await onReload();
         setEditing(false);
@@ -80,7 +73,10 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                <button className="btn btn-sm btn-accent" onClick={editing ? handleSave : () => setEditing(true)}>
+                <button
+                    className="btn btn-sm btn-accent"
+                    onClick={editing ? handleSave : () => setEditing(true)}
+                >
                     {editing ? "Enregistrer" : "Modifier"}
                 </button>
             </div>
@@ -91,7 +87,9 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
                     <tr>
                         <th>Matricule</th>
                         <th>Prénom Nom</th>
-                        {jours.map((j) => <th key={j}>{j}</th>)}
+                        {jours.map((j) => (
+                            <th key={j}>{j}</th>
+                        ))}
                         <th>IBAN</th>
                         <th>Total</th>
                         <th>Primes</th>
@@ -101,7 +99,12 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
                     {agents.map((agent) => {
                         const heuresAgent = local[agent.id] || new Array(7).fill(0);
                         const total = heuresAgent.reduce((s, h) => s + h, 0);
-                        const primes = Math.floor(total / 10);
+                        let primes = 0;
+                        if (total >= 20) {
+                            primes = 3000;
+                        } else if (total >= 10) {
+                            primes = 1000;
+                        }
 
                         return (
                             <tr key={agent.id}>
@@ -117,9 +120,7 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
                                                 const val = parseInt(e.target.value) || 0;
                                                 setLocal((prev) => ({
                                                     ...prev,
-                                                    [agent.id]: prev[agent.id].map((h, j) =>
-                                                        j === i ? val : h
-                                                    ),
+                                                    [agent.id]: prev[agent.id].map((h, j) => j === i ? val : h),
                                                 }));
                                             }}
                                             disabled={!editing}
@@ -129,13 +130,14 @@ export default function AdminEditableWeekTable({ agents, heures, onReload }: Pro
                                 ))}
                                 <td>{agent.iban}</td>
                                 <td>{total}</td>
-                                <td>{primes} 💵</td>
+                                <td>{primes.toLocaleString()} 💵</td>
                             </tr>
                         );
                     })}
                     </tbody>
                 </table>
             </div>
+
             {toastMsg && <Toast message={toastMsg.text} type={toastMsg.type} />}
         </div>
     );

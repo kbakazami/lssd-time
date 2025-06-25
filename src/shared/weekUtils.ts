@@ -29,3 +29,6 @@ export function getSaturday(date: Date = new Date()): Date {
     return d;
 }
 
+export const toISODate = (d: Date): string => d.toISOString().split("T")[0];
+
+

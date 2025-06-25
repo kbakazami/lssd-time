@@ -9,12 +9,12 @@ import EditableWeekHoursTable from "../components/EditableWeekHoursTable";
 import IbanForm from "../components/IbanForm";
 import { supabase } from "../../lib/supabaseClient";
 import { WeekSelector } from "../components/WeekSelector";
-import { getWeekRangeFromSaturday, formatWeekRangeFromSaturday } from "../../shared/weekUtils";
+import {getWeekRangeFromSaturday, formatWeekRangeFromSaturday, getSaturday} from "../../shared/weekUtils";
 
 export default function AdminDashboard() {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [heures, setHeures] = useState<Heure[]>([]);
-    const [startDate, setStartDate] = useState<Date>(new Date());
+    const [startDate, setStartDate] = useState<Date>(getSaturday(new Date()));
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     const reload = async (start: Date) => {

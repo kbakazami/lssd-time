@@ -4,78 +4,65 @@ import { getHeuresBetween } from "../../infrastructure/supabaseHeureRepository";
 import type { Agent } from "../../domain/models/Agent";
 import type { Heure } from "../../domain/models/Heure";
 import AdminWeekTable from "../components/AdminWeekTable";
-import { formatWeekRange, getWeekRangeFromDate } from "../../shared/weekUtils";
-import LogoutButton from "../components/LogoutButton.tsx";
+import LogoutButton from "../components/LogoutButton";
 import EditableWeekHoursTable from "../components/EditableWeekHoursTable";
 import IbanForm from "../components/IbanForm";
-import {supabase} from "../../lib/supabaseClient.ts";
-// import CreateUserForm from "../components/CreateUserForm.tsx";
+import { supabase } from "../../lib/supabaseClient";
+import { WeekSelector } from "../components/WeekSelector";
+import { getWeekRangeFromSaturday, formatWeekRangeFromSaturday } from "../../shared/weekUtils";
 
 export default function AdminDashboard() {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [heures, setHeures] = useState<Heure[]>([]);
-    const [weekDate, setWeekDate] = useState(new Date());
-
-    const [start, end] = getWeekRangeFromDate(weekDate);
-
-    const reload = async () => {
-        const data = await getHeuresBetween(start, end);
-        setHeures(data);
-    };
-
-    useEffect(() => {
-        (async () => {
-            const a = await getAllAgents();
-            const h = await getHeuresBetween(start, end);
-            setAgents(a);
-            setHeures(h);
-        })();
-    }, [start, end]);
-
-    const handlePrevWeek = () => {
-        const d = new Date(weekDate);
-        d.setDate(d.getDate() - 7);
-        setWeekDate(d);
-    };
-
-    const handleNextWeek = () => {
-        const d = new Date(weekDate);
-        d.setDate(d.getDate() + 7);
-        setWeekDate(d);
-    };
-
+    const [startDate, setStartDate] = useState<Date>(new Date());
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+    const reload = async (start: Date) => {
+        const [startRange, endRange] = getWeekRangeFromSaturday(start);
+        const heures = await getHeuresBetween(startRange, endRange);
+        setHeures(heures);
+    };
+
     useEffect(() => {
-        const getUser = async () => {
+        const init = async () => {
+            const a = await getAllAgents();
+            setAgents(a);
+
             const { data } = await supabase.auth.getUser();
             setCurrentUserId(data.user?.id || null);
         };
-        getUser();
+        init();
     }, []);
+
+    // recharger les heures à chaque changement de semaine
+    useEffect(() => {
+        reload(startDate);
+    }, [startDate]);
 
     if (!currentUserId) return null;
 
     return (
         <div className="p-4">
             <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">Semaine : {formatWeekRange(weekDate)}</h1>
+                <h1 className="text-2xl font-bold">
+                    Semaine : {formatWeekRangeFromSaturday(startDate)}
+                </h1>
                 <div className="flex gap-2">
-                    <button className="btn btn-sm" onClick={handlePrevWeek}>⬅️ Précédente</button>
-                    <button className="btn btn-sm" onClick={handleNextWeek}>Suivante ➡️</button>
+                    <WeekSelector onChange={(d) => setStartDate(d)} />
                     <LogoutButton />
                 </div>
             </div>
 
-            {/*<CreateUserForm onUserCreated={reload} />*/}
-            <AdminWeekTable agents={agents} heures={heures} onReload={reload} />
+            <AdminWeekTable startDate={startDate} agents={agents} heures={heures} onReload={() => reload(startDate)} />
+
             <div className="mb-8">
                 <h2 className="text-lg font-bold mb-2">Ma fiche personnelle</h2>
                 <IbanForm />
                 <EditableWeekHoursTable
                     agentId={currentUserId}
                     heures={heures.filter((h) => h.agent_id === currentUserId)}
-                    onReload={reload}
+                    onReload={() => reload(startDate)}
+                    startDate={startDate}
                 />
             </div>
         </div>

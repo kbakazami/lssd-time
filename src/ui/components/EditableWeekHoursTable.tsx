@@ -1,40 +1,38 @@
 import { useEffect, useState } from "react";
 import type { Heure } from "../../domain/models/Heure";
-import { getLundi } from "../../shared/dateUtils";
 import { saveHeure } from "../../infrastructure/supabaseHeureRepository";
 import Toast from "./Toast";
-
 
 type Props = {
     agentId: string;
     heures: Heure[];
     onReload: () => void;
+    startDate: Date; // <- doit correspondre à Samedi
 };
 
-const jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+// Ordre de la semaine : Samedi → Vendredi
+const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
-export default function EditableWeekHoursTable({ agentId, heures, onReload }: Props) {
-    const lundi = getLundi();
+export default function EditableWeekHoursTable({ agentId, heures, onReload, startDate }: Props) {
     const [editing, setEditing] = useState(false);
     const [localHeures, setLocalHeures] = useState<number[]>(new Array(7).fill(0));
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-
-    // Met à jour localHeures à chaque changement de données
+    // Mise à jour du tableau local à chaque changement de semaine ou données
     useEffect(() => {
-        const newHeures = jours.map((_, i) => {
-            const d = new Date(lundi);
-            d.setDate(d.getDate() + i);
-            const dateStr = d.toISOString().split("T")[0];
+        const newState = jours.map((_, i) => {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            const dateStr = date.toISOString().split("T")[0];
             return heures.find((h) => h.date === dateStr)?.heures || 0;
         });
-        setLocalHeures(newHeures);
-    }, [heures]);
+
+        setLocalHeures(newState);
+    }, [startDate, heures]);
 
     const handleSave = async () => {
-        console.log("💾 Début de l'enregistrement des heures...");
         for (let i = 0; i < 7; i++) {
-            const date = new Date(lundi);
+            const date = new Date(startDate);
             date.setDate(date.getDate() + i);
             const dateStr = date.toISOString().split("T")[0];
             const newValue = localHeures[i];
@@ -42,38 +40,30 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload }: Pr
             const existing = heures.find((h) => h.date === dateStr);
             const oldValue = existing?.heures ?? null;
 
-            if (oldValue === null && newValue === 0) {
-                console.log(`❌ Ignoré ${dateStr} : vide`);
-                continue;
-            }
+            if (oldValue === null && newValue === 0) continue;
 
             if (oldValue === null && newValue > 0) {
-                console.log(`✅ Insertion ${dateStr} : ${newValue}h`);
                 await saveHeure({ agent_id: agentId, date: dateStr, heures: newValue });
                 continue;
             }
 
             if (oldValue !== null && oldValue !== newValue) {
-                console.log(`✏️ Mise à jour ${dateStr} : ${oldValue}h → ${newValue}h`);
                 await saveHeure({ agent_id: agentId, date: dateStr, heures: newValue });
-                continue;
             }
-
-            console.log(`➡️ Inchangé ${dateStr} : ${newValue}h`);
         }
 
         await onReload();
         setEditing(false);
-
-        await onReload();
-        setEditing(false);
         setToastMsg({ text: "Heures enregistrées avec succès ✅", type: "success" });
-
-        console.log("✅ Sauvegarde terminée");
     };
 
     const total = localHeures.reduce((sum, h) => sum + h, 0);
-    const primes = Math.floor(total / 10);
+    let primes = 0;
+    if (total >= 20) {
+        primes = 3000;
+    } else if (total >= 10) {
+        primes = 1000;
+    }
 
     return (
         <div className="space-y-4">
@@ -117,7 +107,7 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload }: Pr
                 </tr>
                 <tr>
                     <td>Primes</td>
-                    <td>{primes} 💵</td>
+                    <td>{primes.toLocaleString()} 💵</td>
                 </tr>
                 </tbody>
             </table>

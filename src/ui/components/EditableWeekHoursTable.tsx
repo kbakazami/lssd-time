@@ -7,10 +7,9 @@ type Props = {
     agentId: string;
     heures: Heure[];
     onReload: () => void;
-    startDate: Date; // <- doit correspondre à Samedi
+    startDate: Date; // doit être le samedi de la semaine
 };
 
-// Ordre de la semaine : Samedi → Vendredi
 const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
 export default function EditableWeekHoursTable({ agentId, heures, onReload, startDate }: Props) {
@@ -18,11 +17,13 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
     const [localHeures, setLocalHeures] = useState<number[]>(new Array(7).fill(0));
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-    // Mise à jour du tableau local à chaque changement de semaine ou données
+    // ✅ Hook toujours en haut, avec condition interne
     useEffect(() => {
+        if (!startDate || isNaN(startDate.getTime())) return;
+
         const newState = jours.map((_, i) => {
             const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
+            date.setDate(date.getDate() + i);
             const dateStr = date.toISOString().split("T")[0];
             return heures.find((h) => h.date === dateStr)?.heures || 0;
         });
@@ -41,12 +42,10 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
             const oldValue = existing?.heures ?? null;
 
             if (oldValue === null && newValue === 0) continue;
-
             if (oldValue === null && newValue > 0) {
                 await saveHeure({ agent_id: agentId, date: dateStr, heures: newValue });
                 continue;
             }
-
             if (oldValue !== null && oldValue !== newValue) {
                 await saveHeure({ agent_id: agentId, date: dateStr, heures: newValue });
             }
@@ -57,6 +56,7 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
         setToastMsg({ text: "Heures enregistrées avec succès ✅", type: "success" });
     };
 
+    // Calcul total + primes
     const total = localHeures.reduce((sum, h) => sum + h, 0);
     let primes = 0;
     if (total >= 20) {
@@ -65,11 +65,23 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
         primes = 1000;
     }
 
+    // ✅ Affichage protégé si la date est absente
+    if (!startDate || isNaN(startDate.getTime())) {
+        return (
+            <div className="text-center text-sm text-gray-500">
+                Chargement de la fiche d’heures...
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4">
             {toastMsg && <Toast message={toastMsg.text} type={toastMsg.type} />}
             <div className="flex justify-end">
-                <button className="btn btn-sm btn-accent" onClick={editing ? handleSave : () => setEditing(true)}>
+                <button
+                    className="btn btn-sm btn-accent"
+                    onClick={editing ? handleSave : () => setEditing(true)}
+                >
                     {editing ? "Enregistrer" : "Modifier"}
                 </button>
             </div>

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import type { Agent } from "../../domain/models/Agent";
-import type { Heure } from "../../domain/models/Heure";
-import { saveHeure } from "../../infrastructure/supabaseHeureRepository";
+import {useState, useEffect} from "react";
+import type {Agent} from "../../domain/models/Agent";
+import type {Heure} from "../../domain/models/Heure";
+import {saveHeure} from "../../infrastructure/supabaseHeureRepository";
 import Toast from "./Toast";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 
 const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
-export default function AdminEditableWeekTable({ agents, heures, onReload, startDate }: Props) {
+export default function AdminEditableWeekTable({agents, heures, onReload, startDate}: Props) {
     const [editing, setEditing] = useState(false);
     const [local, setLocal] = useState<Record<string, number[]>>({}); // clé : agentId → [heures sur 7 jours]
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -55,20 +55,36 @@ export default function AdminEditableWeekTable({ agents, heures, onReload, start
                 if (oldValue === null && newValue === 0) continue;
 
                 if (oldValue === null && newValue > 0) {
-                    await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
+                    await saveHeure({agent_id: agent.id, date: dateStr, heures: newValue});
                     continue;
                 }
 
                 if (oldValue !== null && oldValue !== newValue) {
-                    await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
+                    await saveHeure({agent_id: agent.id, date: dateStr, heures: newValue});
                 }
             }
         }
 
         await onReload();
         setEditing(false);
-        setToastMsg({ text: "Heures enregistrées avec succès ✅", type: "success" });
+        setToastMsg({text: "Heures enregistrées avec succès ✅", type: "success"});
     };
+
+    const arrayPrimesByagents = agents.map((agent) => {
+        const heuresAgent = local[agent.id] || new Array(7).fill(0);
+        const total = heuresAgent.reduce((s, h) => s + h, 0);
+        let primes = 0;
+
+        if (total >= 30) {
+            primes = 5000;
+        } else if (total >= 20) {
+            primes = 3000;
+        } else if (total >= 10) {
+            primes = 1000;
+        }
+
+        return {agent, total, primes};
+    });
 
     return (
         <div className="space-y-4">
@@ -100,7 +116,9 @@ export default function AdminEditableWeekTable({ agents, heures, onReload, start
                         const heuresAgent = local[agent.id] || new Array(7).fill(0);
                         const total = heuresAgent.reduce((s, h) => s + h, 0);
                         let primes = 0;
-                        if (total >= 20) {
+                        if (total >= 30) {
+                            primes = 5000;
+                        } else if (total >= 20) {
                             primes = 3000;
                         } else if (total >= 10) {
                             primes = 1000;
@@ -136,9 +154,17 @@ export default function AdminEditableWeekTable({ agents, heures, onReload, start
                     })}
                     </tbody>
                 </table>
+                <div>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Total des heures : {heures.reduce((s, h) => s + h.heures, 0)} heures
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Total des primes :  {arrayPrimesByagents.reduce((s, a) => s + a.primes, 0).toLocaleString()} 💰
+                    </p>
+                </div>
             </div>
 
-            {toastMsg && <Toast message={toastMsg.text} type={toastMsg.type} />}
+            {toastMsg && <Toast message={toastMsg.text} type={toastMsg.type}/>}
         </div>
     );
 }

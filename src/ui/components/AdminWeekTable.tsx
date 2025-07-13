@@ -114,9 +114,7 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                         const heuresAgent = local[agent.id] || new Array(7).fill(0);
                         const total = heuresAgent.reduce((s, h) => s + h, 0);
                         let primes = 0;
-                        if (total >= 30) {
-                            primes = 5000;
-                        } else if (total >= 20) {
+                        if (total >= 20) {
                             primes = 3000;
                         } else if (total >= 10) {
                             primes = 1000;

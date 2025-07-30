@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Heure } from "../../domain/models/Heure";
 import { saveHeure } from "../../infrastructure/supabaseHeureRepository";
 import Toast from "./Toast";
+import { days } from "../../shared/weeksDay.ts";
 
 type Props = {
     agentId: string;
@@ -10,7 +11,6 @@ type Props = {
     startDate: Date; // doit être le samedi de la semaine
 };
 
-const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
 export default function EditableWeekHoursTable({ agentId, heures, onReload, startDate }: Props) {
     const [editing, setEditing] = useState(false);
@@ -21,7 +21,7 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
     useEffect(() => {
         if (!startDate || isNaN(startDate.getTime())) return;
 
-        const newState = jours.map((_, i) => {
+        const newState = days.map((_, i) => {
             const date = new Date(startDate);
             date.setDate(date.getDate() + i);
             const dateStr = date.toISOString().split("T")[0];
@@ -94,9 +94,9 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
                 </tr>
                 </thead>
                 <tbody>
-                {jours.map((jour, i) => (
-                    <tr key={jour}>
-                        <td>{jour}</td>
+                {days.map((day, i) => (
+                    <tr key={day}>
+                        <td>{day}</td>
                         <td>
                             <input
                                 type="number"

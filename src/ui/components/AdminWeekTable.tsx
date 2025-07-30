@@ -6,6 +6,7 @@ import {toISODate} from "../../shared/weekUtils";
 import {computePrime} from "../../domain/services/primeService";
 import {sumHeures} from "../../domain/services/heuresService";
 import Toast from "./Toast";
+import { days } from "../../shared/weeksDay.ts";
 
 type Props = {
     agents: Agent[];
@@ -13,8 +14,6 @@ type Props = {
     onReload: () => void;
     startDate: Date; // 🆕 reçu en props
 };
-
-const jours = ["Samedi", "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 
 export default function AdminEditableWeekTable({agents, heures, onReload, startDate}: Props) {
     const [editing, setEditing] = useState(false);
@@ -103,8 +102,8 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                     <tr>
                         <th>Matricule</th>
                         <th>Prénom Nom</th>
-                        {jours.map((j) => (
-                            <th key={j}>{j}</th>
+                        {days.map((day) => (
+                            <th key={day}>{day}</th>
                         ))}
                         <th>IBAN</th>
                         <th>Total</th>
@@ -116,7 +115,7 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                         <tr key={agent.id}>
                             <td>{agent.matricule}</td>
                             <td>{agent.prenom} {agent.nom}</td>
-                            {jours.map((_, i) => (
+                            {days.map((_, i) => (
                                 <td key={i}>
                                     <input
                                         type="number"

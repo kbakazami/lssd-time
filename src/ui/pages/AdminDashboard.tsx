@@ -40,7 +40,6 @@ export default function AdminDashboard() {
         init();
     }, []);
 
-    // recharger les heures à chaque changement de semaine
     useEffect(() => {
         reload(startDate);
     }, [startDate]);
@@ -60,8 +59,8 @@ export default function AdminDashboard() {
             </div>
 
             <nav className="mb-4 flex gap-2">
-                <Link to="table" className="btn btn-sm btn-secondary">Tableau</Link>
-                <Link to="profile" className="btn btn-sm btn-secondary">Ma fiche</Link>
+                <Link to="/admin/table" className="btn btn-sm btn-secondary">Tableau</Link>
+                <Link to="/admin/profile" className="btn btn-sm btn-secondary">Ma fiche</Link>
             </nav>
 
             <Outlet context={{ agents, heures, startDate, currentUserId, reload }} />

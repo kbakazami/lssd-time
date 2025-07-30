@@ -61,6 +61,7 @@ export default function AdminDashboard() {
             <nav className="mb-4 flex gap-2">
                 <Link to="/admin/table" className="btn btn-sm btn-secondary">Tableau</Link>
                 <Link to="/admin/profile" className="btn btn-sm btn-secondary">Ma fiche</Link>
+                <Link to="/admin/create-agent" className="btn btn-sm btn-secondary">Ajouter un agent</Link>
             </nav>
 
             <Outlet context={{ agents, heures, startDate, currentUserId, reload }} />

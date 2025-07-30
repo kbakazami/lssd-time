@@ -10,15 +10,17 @@ export default function AdminProfilePage() {
     const myHeures = heures.filter((h) => h.agent_id === currentUserId);
 
     return (
-        <div className="mb-8 space-y-4">
-            <h2 className="text-lg font-bold">Ma fiche personnelle</h2>
-            <IbanForm />
-            <EditableWeekHoursTable
-                agentId={currentUserId}
-                heures={myHeures}
-                onReload={() => reload(startDate)}
-                startDate={startDate}
-            />
+        <div className="flex flex-col justify-center items-center mb-8 space-y-4 w-full">
+            <div className="container flex flex-col justify-center items-center mb-8">
+                <h2 className="text-lg font-bold">Ma fiche personnelle</h2>
+                <IbanForm />
+                <EditableWeekHoursTable
+                    agentId={currentUserId}
+                    heures={myHeures}
+                    onReload={() => reload(startDate)}
+                    startDate={startDate}
+                />
+            </div>
         </div>
     );
 }

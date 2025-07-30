@@ -40,17 +40,17 @@ export default function IbanForm() {
     };
 
     return (
-        <div className="space-y-2 mt-6 relative">
-            <label className="label font-semibold">IBAN pour virement</label>
+        <div className="space-y-2 mt-6 relative flex gap-4 items-center center">
+            <label className="label mb-0 font-semibold">IBAN pour virement</label>
             <input
                 type="text"
-                className="input input-bordered w-full"
+                className="input mb-0 input-bordered w-full"
                 value={iban}
                 onChange={(e) => setIban(e.target.value)}
                 disabled={loading}
-                placeholder="415698745 ..."
+                placeholder="us415698745 ..."
             />
-            <button className="btn btn-sm btn-primary mt-2" onClick={handleSave} disabled={loading}>
+            <button className="btn btn-sm btn-primary" onClick={handleSave} disabled={loading}>
                 Enregistrer
             </button>
 

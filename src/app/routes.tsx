@@ -5,6 +5,7 @@ import AdminTablePage from "../ui/pages/AdminTablePage";
 import AdminProfilePage from "../ui/pages/AdminProfilePage";
 import AgentDashboard from "../ui/pages/AgentDashboard";
 import { ProtectedRoute } from "./routeGuards";
+import AdminCreateAgentPage from "../ui/pages/AdminCreateAgentPage.tsx";
 
 export default function AppRoutes() {
     return (
@@ -23,6 +24,7 @@ export default function AppRoutes() {
                     <Route index element={<Navigate to="table" replace />} />
                     <Route path="table" element={<AdminTablePage />} />
                     <Route path="profile" element={<AdminProfilePage />} />
+                    <Route path="create-agent" element={<AdminCreateAgentPage />} />
                 </Route>
 
                 <Route

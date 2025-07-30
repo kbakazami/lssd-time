@@ -8,7 +8,7 @@ type Props = {
     agentId: string;
     heures: Heure[];
     onReload: () => void;
-    startDate: Date; // doit être le samedi de la semaine
+    startDate: Date;
 };
 
 
@@ -17,7 +17,6 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
     const [localHeures, setLocalHeures] = useState<number[]>(new Array(7).fill(0));
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-    // ✅ Hook toujours en haut, avec condition interne
     useEffect(() => {
         if (!startDate || isNaN(startDate.getTime())) return;
 
@@ -65,7 +64,6 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
         primes = 1000;
     }
 
-    // ✅ Affichage protégé si la date est absente
     if (!startDate || isNaN(startDate.getTime())) {
         return (
             <div className="text-center text-sm text-gray-500">
@@ -75,7 +73,7 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
             {toastMsg && <Toast message={toastMsg.text} type={toastMsg.type} />}
             <div className="flex justify-end">
                 <button

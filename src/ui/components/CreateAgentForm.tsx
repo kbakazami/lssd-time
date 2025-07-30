@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import * as React from "react";
 
-export default function CreateAgentForm() {
+interface Props {
+    setToastMsg: (msg: { text: string; type: 'success' | 'error' }) => void;
+}
+
+const CreateAgentForm: React.FC<Props> = ({ setToastMsg }) => {
     const [form, setForm] = useState({
         email: '',
         password: '',
         nom: '',
         prenom: '',
         matricule: '',
-        role: '',
-        iban: '',
+        role: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,14 +35,13 @@ export default function CreateAgentForm() {
 
         const userId = data.user.id;
 
-        const { error: insertError } = await supabase.from('agent').insert({
+        const { error: insertError } = await supabase.from('agents').insert({
             id: userId,
             pseudo: form.email,
             nom: form.nom,
             prenom: form.prenom,
             matricule: form.matricule,
-            role: form.role,
-            iban: form.iban,
+            role: form.role
         });
 
         if (insertError) {
@@ -47,19 +49,29 @@ export default function CreateAgentForm() {
             return;
         }
 
-        alert('Agent créé avec succès 🎉');
+        setToastMsg({ text: 'Agent créé avec succès ✅', type: 'success' });
+
+        setForm({
+            email: '',
+            password: '',
+            nom: '',
+            prenom: '',
+            matricule: '',
+            role: ''
+        });
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-            <input name="password" type="password" placeholder="Mot de passe" value={form.password} onChange={handleChange} required />
-            <input name="nom" placeholder="Nom" value={form.nom} onChange={handleChange} required />
-            <input name="prenom" placeholder="Prénom" value={form.prenom} onChange={handleChange} required />
-            <input name="matricule" placeholder="Matricule" value={form.matricule} onChange={handleChange} required />
-            <input name="role" placeholder="Rôle" value={form.role} onChange={handleChange} required />
-            <input name="iban" placeholder="IBAN" value={form.iban} onChange={handleChange} required />
-            <button type="submit">Créer l’agent</button>
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col border p-10 rounded w-100">
+            <input className="input input-sm input-bordered w-full" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="password" type="password" placeholder="Mot de passe" value={form.password} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="nom" placeholder="Nom" value={form.nom} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="prenom" placeholder="Prénom" value={form.prenom} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="matricule" placeholder="Matricule" value={form.matricule} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="role" placeholder="Rôle" value={form.role} onChange={handleChange} required />
+            <button className="btn btn-primary" type="submit">Créer l’agent</button>
         </form>
     );
 }
+
+export default CreateAgentForm;

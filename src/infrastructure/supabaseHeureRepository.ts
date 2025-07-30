@@ -17,7 +17,7 @@ export const saveHeure = async (h: { agent_id: string; date: string; heures: num
         .select("id")
         .eq("agent_id", h.agent_id)
         .eq("date", h.date)
-        .single();
+        .maybeSingle();
 
     if (data?.id) {
         await supabase.from("heures").update({ heures: h.heures }).eq("id", data.id);

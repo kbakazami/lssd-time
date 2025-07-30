@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
+import * as React from "react";
 
-export default function Toast({ message, type = "success" }: { message: string; type?: "success" | "error" }) {
+interface ToastProps {
+    message: string;
+    type?: "success" | "error";
+    duration?: number;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type = "success", duration = 3000 }) => {
     const [visible, setVisible] = useState(true);
 
+    // Redémarre l'affichage si `message` change
     useEffect(() => {
-        const timer = setTimeout(() => setVisible(false), 3000);
+        setVisible(true);
+        const timer = setTimeout(() => setVisible(false), duration);
         return () => clearTimeout(timer);
-    }, []);
+    }, [message, duration]);
 
     if (!visible) return null;
 
@@ -18,3 +27,5 @@ export default function Toast({ message, type = "success" }: { message: string; 
         </div>
     );
 }
+
+export default Toast;

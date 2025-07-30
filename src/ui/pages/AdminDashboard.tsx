@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
+import { Link, Outlet } from "react-router-dom";
 import { getAllAgents } from "../../infrastructure/supabaseAgentRepository";
 import { getHeuresBetween } from "../../infrastructure/supabaseHeureRepository";
 import type { Agent } from "../../domain/models/Agent";
 import type { Heure } from "../../domain/models/Heure";
-import AdminWeekTable from "../components/AdminWeekTable";
 import LogoutButton from "../components/LogoutButton";
-import EditableWeekHoursTable from "../components/EditableWeekHoursTable";
-import IbanForm from "../components/IbanForm";
 import { supabase } from "../../lib/supabaseClient";
 import { WeekSelector } from "../components/WeekSelector";
 import {getWeekRangeFromSaturday, formatWeekRangeFromSaturday, getSaturday} from "../../shared/weekUtils";
+
+export type AdminDashboardContext = {
+    agents: Agent[];
+    heures: Heure[];
+    startDate: Date;
+    currentUserId: string | null;
+    reload: (start: Date) => Promise<void>;
+};
 
 export default function AdminDashboard() {
     const [agents, setAgents] = useState<Agent[]>([]);
@@ -34,7 +40,6 @@ export default function AdminDashboard() {
         init();
     }, []);
 
-    // recharger les heures à chaque changement de semaine
     useEffect(() => {
         reload(startDate);
     }, [startDate]);
@@ -53,18 +58,13 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <AdminWeekTable startDate={startDate} agents={agents} heures={heures} onReload={() => reload(startDate)} />
+            <nav className="mb-4 flex gap-2">
+                <Link to="/admin/table" className="btn btn-sm btn-secondary">Tableau</Link>
+                <Link to="/admin/profile" className="btn btn-sm btn-secondary">Ma fiche</Link>
+                <Link to="/admin/create-agent" className="btn btn-sm btn-secondary">Ajouter un agent</Link>
+            </nav>
 
-            <div className="mb-8">
-                <h2 className="text-lg font-bold mb-2">Ma fiche personnelle</h2>
-                <IbanForm />
-                <EditableWeekHoursTable
-                    agentId={currentUserId}
-                    heures={heures.filter((h) => h.agent_id === currentUserId)}
-                    onReload={() => reload(startDate)}
-                    startDate={startDate}
-                />
-            </div>
+            <Outlet context={{ agents, heures, startDate, currentUserId, reload }} />
         </div>
     );
 }

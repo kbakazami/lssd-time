@@ -19,8 +19,12 @@ export default function Login() {
             } else {
                 navigate("/agent");
             }
-        } catch (err: any) {
-            setError(err.message || "Erreur de connexion");
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Erreur de connexion");
+            }
         }
     };
 

@@ -50,7 +50,7 @@ export default function EditableWeekHoursTable({ agentId, heures, onReload, star
             }
         }
 
-        await onReload();
+        onReload();
         setEditing(false);
         setToastMsg({ text: "Heures enregistrées avec succès ✅", type: "success" });
     };

@@ -6,7 +6,7 @@ import {toISODate} from "../../shared/weekUtils";
 import {computePrime} from "../../domain/services/primeService";
 import {sumHeures} from "../../domain/services/heuresService";
 import Toast from "./Toast";
-import { days } from "../../shared/weeksDay.ts";
+import {days} from "../../shared/weeksDay.ts";
 
 type Props = {
     agents: Agent[];
@@ -20,9 +20,11 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
     const [local, setLocal] = useState<Record<string, number[]>>({}); // clé : agentId → [heures sur 7 jours]
     const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
+    const countAgents = agents.length;
+
     // Init local state à chaque changement de semaine ou données
     useEffect(() => {
-        const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const weekDates = Array.from({length: 7}, (_, i) => {
             const d = new Date(startDate);
             d.setDate(d.getDate() + i);
             return toISODate(d);
@@ -40,11 +42,12 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
     }, [heures, agents, startDate]);
 
     const handleSave = async () => {
-        const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const weekDates = Array.from({length: 7}, (_, i) => {
             const d = new Date(startDate);
             d.setDate(d.getDate() + i);
             return toISODate(d);
         });
+
 
         for (const agent of agents) {
             const heuresAgent = local[agent.id] || [];
@@ -55,23 +58,24 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                 const existing = heures.find(
                     (h) => h.agent_id === agent.id && h.date === dateStr
                 );
+
                 const oldValue = existing?.heures ?? null;
                 const newValue = heuresAgent[i];
 
                 if (oldValue === null && newValue === 0) continue;
 
                 if (oldValue === null && newValue > 0) {
-                    await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
+                    await saveHeure({agent_id: agent.id, date: dateStr, heures: newValue});
                     continue;
                 }
 
                 if (oldValue !== null && oldValue !== newValue) {
-                    await saveHeure({ agent_id: agent.id, date: dateStr, heures: newValue });
+                    await saveHeure({agent_id: agent.id, date: dateStr, heures: newValue});
                 }
             }
         }
 
-        await onReload();
+        onReload();
         setEditing(false);
         setToastMsg({text: "Heures enregistrées avec succès ✅", type: "success"});
     };
@@ -80,14 +84,16 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
         const heuresAgent = local[agent.id] || new Array(7).fill(0);
         const total = sumHeures(heuresAgent);
         const primes = computePrime(total);
-        return { agent, heuresAgent, total, primes };
+        return {agent, heuresAgent, total, primes};
     });
+
     const totalPrimes = statsByAgent.reduce((s, a) => s + a.primes, 0);
     const totalHeures = heures.reduce((s, h) => s + h.heures, 0);
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-between">
+                <p>👮 Nombre d'agents : {countAgents}</p>
                 <button
                     className="btn btn-sm btn-accent"
                     onClick={editing ? handleSave : () => setEditing(true)}
@@ -111,7 +117,7 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                     </tr>
                     </thead>
                     <tbody>
-                    {statsByAgent.map(({ agent, heuresAgent, total, primes }) => (
+                    {statsByAgent.map(({agent, heuresAgent, total, primes}) => (
                         <tr key={agent.id}>
                             <td>{agent.matricule}</td>
                             <td>{agent.prenom} {agent.nom}</td>
@@ -145,7 +151,7 @@ export default function AdminEditableWeekTable({agents, heures, onReload, startD
                         Total des heures : {totalHeures} heures
                     </p>
                     <p className="text-sm text-gray-500">
-                        Total des primes :  {totalPrimes.toLocaleString()} 💰
+                        Total des primes : {totalPrimes.toLocaleString()} 💰
                     </p>
                 </div>
             </div>

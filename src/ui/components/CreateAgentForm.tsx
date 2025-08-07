@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
 import * as React from "react";
+import {createAgent} from "../../infrastructure/supabaseAgentRepository.ts";
 
 interface Props {
     setToastMsg: (msg: { text: string; type: 'success' | 'error' }) => void;
@@ -8,7 +8,7 @@ interface Props {
 
 const CreateAgentForm: React.FC<Props> = ({ setToastMsg }) => {
     const [form, setForm] = useState({
-        email: '',
+        pseudo: '',
         password: '',
         nom: '',
         prenom: '',
@@ -23,36 +23,12 @@ const CreateAgentForm: React.FC<Props> = ({ setToastMsg }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const { data, error } = await supabase.auth.signUp({
-            email: form.email,
-            password: form.password,
-        });
-
-        if (error || !data.user) {
-            console.error('Erreur création utilisateur:', error?.message);
-            return;
-        }
-
-        const userId = data.user.id;
-
-        const { error: insertError } = await supabase.from('agents').insert({
-            id: userId,
-            pseudo: form.email,
-            nom: form.nom,
-            prenom: form.prenom,
-            matricule: form.matricule,
-            role: form.role
-        });
-
-        if (insertError) {
-            console.error('Erreur insertion agent:', insertError.message);
-            return;
-        }
+        await createAgent({ ...form, role: form.role as 'admin' | 'agent' })
 
         setToastMsg({ text: 'Agent créé avec succès ✅', type: 'success' });
 
         setForm({
-            email: '',
+            pseudo: '',
             password: '',
             nom: '',
             prenom: '',
@@ -63,7 +39,7 @@ const CreateAgentForm: React.FC<Props> = ({ setToastMsg }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 flex flex-col border p-10 rounded w-100">
-            <input className="input input-sm input-bordered w-full" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
+            <input className="input input-sm input-bordered w-full" name="pseudo" placeholder="Pseudo" value={form.pseudo} onChange={handleChange} required />
             <input className="input input-sm input-bordered w-full" name="password" type="password" placeholder="Mot de passe" value={form.password} onChange={handleChange} required />
             <input className="input input-sm input-bordered w-full" name="nom" placeholder="Nom" value={form.nom} onChange={handleChange} required />
             <input className="input input-sm input-bordered w-full" name="prenom" placeholder="Prénom" value={form.prenom} onChange={handleChange} required />

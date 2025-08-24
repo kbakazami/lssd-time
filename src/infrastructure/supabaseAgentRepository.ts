@@ -10,7 +10,7 @@ export const getAllAgents = async (): Promise<Agent[]> => {
 export const createAgent = async (agent: CreateAgent): Promise<void> => {
     const { data, error } = await supabase.auth.signUp({
         email: agent.pseudo,
-        password: agent.matricule, // Assuming matricule is used as password
+        password: agent.password, // Assuming matricule is used as password
     });
 
     if (error || !data.user) {
